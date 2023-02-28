@@ -30,6 +30,7 @@ type serveOptions struct {
 	ocmURL      string
 	clusterID   string
 	debug       bool
+	fleetMode   bool
 	logger      logrus.Logger
 }
 
@@ -79,13 +80,13 @@ func NewServeCmd() *cobra.Command {
 	cmd.Flags().StringVarP(&o.services, config.Services, "", "", "OCM service name")
 	cmd.Flags().StringVarP(&o.accessToken, config.AccessToken, "t", "", "Access token for OCM")
 	cmd.Flags().StringVarP(&o.clusterID, config.ClusterID, "c", "", "Cluster ID")
+	cmd.Flags().BoolVar(&o.fleetMode, config.FleetMode, false, "Running in fleet mode for RHOBS")
 	cmd.PersistentFlags().BoolVarP(&o.debug, config.Debug, "d", false, "Debug mode enable")
 	kcmdutil.CheckErr(viper.BindPFlags(cmd.Flags()))
 
 	_ = cmd.MarkFlagRequired(config.OcmURL)
 	_ = cmd.MarkFlagRequired(config.Services)
 	_ = cmd.MarkFlagRequired(config.AccessToken)
-	_ = cmd.MarkFlagRequired(config.ClusterID)
 
 	return cmd
 }
@@ -147,9 +148,15 @@ func (o *serveOptions) Run() error {
 	livezHandler := handlers.NewLivezHandler()
 	readyzHandler := handlers.NewReadyzHandler()
 	webhookReceiverHandler := handlers.NewWebhookReceiverHandler(client, ocmclient)
+	rhobsReceiverHandler := handlers.NewWebhookRHOBSReceiverHandler(client, ocmclient)
 	r.Path(consts.LivezPath).Handler(livezHandler)
 	r.Path(consts.ReadyzPath).Handler(readyzHandler)
-	r.Path(consts.WebhookReceiverPath).Handler(webhookReceiverHandler)
+	// Set different receiver for fleet mode
+	if o.fleetMode {
+		r.Path(consts.WebhookReceiverPath).Handler(webhookReceiverHandler)
+	} else {
+		r.Path(consts.WebhookRHOBSReceiverPath).Handler(rhobsReceiverHandler)
+	}
 	r.Use(metrics.PrometheusMiddleware)
 
 	// serve

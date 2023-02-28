@@ -325,8 +325,8 @@ var _ = Describe("Webhook Handlers", func() {
 					},
 				}
 				gomock.InOrder(
-					mockOCMClient.EXPECT().SendServiceLog(gomock.Any(), gomock.Any()).DoAndReturn(
-						func(n *ocmagentv1alpha1.Notification, firing bool) error {
+					mockOCMClient.EXPECT().SendServiceLog(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+						func(n *ocmagentv1alpha1.Notification, firing bool, clusterId string) error {
 							Expect(n.ActiveDesc).To(Equal("test-active-desc"))
 							return nil
 						}),
@@ -460,7 +460,7 @@ var _ = Describe("Webhook Handlers", func() {
 					},
 				}
 				gomock.InOrder(
-					mockOCMClient.EXPECT().SendServiceLog(gomock.Any(), gomock.Any()).Return(k8serrs.NewInternalError(fmt.Errorf("a fake error"))),
+					mockOCMClient.EXPECT().SendServiceLog(gomock.Any(), gomock.Any(), gomock.Any()).Return(k8serrs.NewInternalError(fmt.Errorf("a fake error"))),
 				)
 				err := webhookReceiverHandler.processAlert(testAlert, testManagedNotificationList, true)
 				Expect(err).Should(HaveOccurred())
@@ -503,7 +503,7 @@ var _ = Describe("Webhook Handlers", func() {
 					},
 				}
 				gomock.InOrder(
-					mockOCMClient.EXPECT().SendServiceLog(gomock.Any(), gomock.Any()).Return(nil),
+					mockOCMClient.EXPECT().SendServiceLog(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil),
 					mockClient.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).SetArg(2, testManagedNotificationList.Items[0]),
 					mockClient.EXPECT().Status().Return(mockStatusWriter),
 					mockStatusWriter.EXPECT().Update(gomock.Any(), gomock.Any(), gomock.Any()).Return(k8serrs.NewInternalError(fmt.Errorf("a fake error"))),

@@ -12,8 +12,11 @@ const (
 	ReadyzPath = "/readyz"
 	// Live probe path for OCM Agent web service
 	LivezPath = "/livez"
-	// Alertmanger webhook receiver path
+	// Alertmanager webhook receiver path
 	WebhookReceiverPath = "/alertmanager-receiver"
+
+	// Alertmanager webhook receiver path for fleet mode
+	WebhookRHOBSReceiverPath = "/rhobs-receiver"
 
 	// Service name for the sending service logs
 	ServiceLogServiceName = "SREManualAction"

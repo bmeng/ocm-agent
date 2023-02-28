@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/openshift/ocm-agent/pkg/config"
-	"github.com/spf13/viper"
 	"net/http"
 	"time"
 
@@ -21,19 +19,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type WebhookReceiverHandler struct {
+type WebhookRHOBSReceiverHandler struct {
 	c   client.Client
 	ocm OCMClient
 }
 
-func NewWebhookReceiverHandler(c client.Client, o OCMClient) *WebhookReceiverHandler {
-	return &WebhookReceiverHandler{
+func NewWebhookRHOBSReceiverHandler(c client.Client, o OCMClient) *WebhookRHOBSReceiverHandler {
+	return &WebhookRHOBSReceiverHandler{
 		c:   c,
 		ocm: o,
 	}
 }
 
-func (h *WebhookReceiverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *WebhookRHOBSReceiverHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// validate request
 	if r != nil && r.Method != http.MethodPost {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -66,7 +64,7 @@ func (h *WebhookReceiverHandler) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	metrics.ResetMetric(metrics.MetricRequestFailure)
 }
 
-func (h *WebhookReceiverHandler) processAMReceiver(d AMReceiverData, ctx context.Context) *AMReceiverResponse {
+func (h *WebhookRHOBSReceiverHandler) processAMReceiver(d AMReceiverData, ctx context.Context) *AMReceiverResponse {
 	log.WithField("AMReceiverData", fmt.Sprintf("%+v", d)).Info("Process alert data")
 
 	// Let's get all ManagedNotifications in the
@@ -101,7 +99,7 @@ func (h *WebhookReceiverHandler) processAMReceiver(d AMReceiverData, ctx context
 
 // processAlert handles the pre-check verification and sending of a notification for a particular alert
 // and returns an error if that process completed successfully or false otherwise
-func (h *WebhookReceiverHandler) processAlert(alert template.Alert, mnl *oav1alpha1.ManagedNotificationList, firing bool) error {
+func (h *WebhookRHOBSReceiverHandler) processAlert(alert template.Alert, mnl *oav1alpha1.ManagedNotificationList, firing bool) error {
 	// Should this alert be handled?
 	if !isValidAlert(alert) {
 		log.WithField(LogFieldAlert, fmt.Sprintf("%+v", alert)).Info("alert does not meet valid criteria")
@@ -148,7 +146,8 @@ func (h *WebhookReceiverHandler) processAlert(alert template.Alert, mnl *oav1alp
 	}
 	// Send the servicelog for the alert
 	log.WithFields(log.Fields{LogFieldNotificationName: notification.Name}).Info("will send servicelog for notification")
-	clusterId := viper.GetString(config.ClusterID)
+	// FIXME Need to get the cluster ID from the alert payload
+	clusterId := "test-string"
 	err = h.ocm.SendServiceLog(notification, firing, clusterId)
 	if err != nil {
 		log.WithError(err).WithFields(log.Fields{LogFieldNotificationName: notification.Name, LogFieldIsFiring: true}).Error("unable to send a notification")
@@ -180,18 +179,7 @@ func (h *WebhookReceiverHandler) processAlert(alert template.Alert, mnl *oav1alp
 	return nil
 }
 
-// getNotification returns the notification from the ManagedNotification bundle if one exists, or error if one does not
-func getNotification(name string, m *oav1alpha1.ManagedNotificationList) (*oav1alpha1.Notification, *oav1alpha1.ManagedNotification, error) {
-	for _, mn := range m.Items {
-		notification, err := mn.GetNotificationForName(name)
-		if notification != nil && err == nil {
-			return notification, &mn, nil
-		}
-	}
-	return nil, nil, fmt.Errorf("matching managed notification not found for %s", name)
-}
-
-func (h *WebhookReceiverHandler) updateNotificationStatus(n *oav1alpha1.Notification, mn *oav1alpha1.ManagedNotification, firing bool) (*oav1alpha1.ManagedNotification, error) {
+func (h *WebhookRHOBSReceiverHandler) updateNotificationStatus(n *oav1alpha1.Notification, mn *oav1alpha1.ManagedNotification, firing bool) (*oav1alpha1.ManagedNotification, error) {
 	var m *oav1alpha1.ManagedNotification
 
 	// Update lastSent timestamp

@@ -35,15 +35,15 @@ func (m *MockOCMClient) EXPECT() *MockOCMClientMockRecorder {
 }
 
 // SendServiceLog mocks base method.
-func (m *MockOCMClient) SendServiceLog(arg0 *v1alpha1.Notification, arg1 bool) error {
+func (m *MockOCMClient) SendServiceLog(arg0 *v1alpha1.Notification, arg1 bool, arg2 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendServiceLog", arg0, arg1)
+	ret := m.ctrl.Call(m, "SendServiceLog", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SendServiceLog indicates an expected call of SendServiceLog.
-func (mr *MockOCMClientMockRecorder) SendServiceLog(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockOCMClientMockRecorder) SendServiceLog(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendServiceLog", reflect.TypeOf((*MockOCMClient)(nil).SendServiceLog), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendServiceLog", reflect.TypeOf((*MockOCMClient)(nil).SendServiceLog), arg0, arg1, arg2)
 }
